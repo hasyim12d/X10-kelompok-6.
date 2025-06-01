@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Pembayaran Iuran Sampah 🗑</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            background: #e8f5e9;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(60,120,60,0.1);
+            padding: 32px 24px 24px 24px;
+        }
+        h2 {
+            color: #388e3c;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #388e3c;
+            margin-bottom: 24px;
+        }
+        label {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            margin-bottom: 16px;
+            border: 1px solid #b2dfdb;
+            border-radius: 6px;
+            background: #f1f8e9;
+        }
+        button {
+            background: #43a047;
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        button:hover, .export-btn:hover {
+            background: #388e3c;
+        }
+        .export-btn {
+            background: #1976d2;
+            margin-bottom: 12px;
+            margin-top: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 28px;
+        }
+        th, td {
+            border: 1px solid #a5d6a7;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+        tr:nth-child(even) {
+            background: #f1f8e9;
+        }
+        .footer {
+            text-align: center;
+            color: #388e3c;
+            margin-top: 32px;
+            font-weight: bold;
+        }
+        .emoji {
+            font-size: 1.2em;
+        }
+        @media (max-width: 700px) {
+            .container { padding: 10px 2vw; }
+            table, thead, tbody, th, td, tr { font-size: 13px; }
+            button, .export-btn { font-size: 13px; padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🗑 Pembayaran Iuran Sampah 🗑</h2>
+        <div class="subtitle">Ayo bayar iuran sampah!</div>
+        <form id="paymentForm" autocomplete="off">
+            <label for="name">Nama:</label>
+            <input type="text" id="name" maxlength="50" required>
+            <label for="address">Alamat:</label>
+            <input type="text" id="address" maxlength="100" required>
+            <label for="amount">Jumlah Pembayaran (Rp):</label>
+            <input type="number" id="amount" min="0" step="0.01" required>
+            <button type="submit">Tambah Pembayaran</button>
+        </form>
+        <button class="export-btn" onclick="exportCSV()">Ekspor ke CSV</button>
+        <table id="paymentsTable">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Nama</th>
+                    <th>Alamat</th>
+                    <th>Jumlah (Rp)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data akan muncul di sini -->
+            </tbody>
+        </table>
+        <div class="footer">
+           Terima kasih telah membayar iuran sampah! <span class="emoji">🗑</span>
+        </div>
+    </div>
+    <script>
+        // Ambil data dari localStorage jika ada
+        let payments = [];
+        if (localStorage.getItem('pembayaranIuranSampah')) {
+            payments = JSON.parse(localStorage.getItem('pembayaranIuranSampah'));
+        }
+
+        const form = document.getElementById('paymentForm');
+        const tableBody = document.querySelector('#paymentsTable tbody');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const amount = parseFloat(document.getElementById('amount').value);
+
+            if (name && address && !isNaN(amount)) {
+                payments.push({ name, address, amount });
+                localStorage.setItem('pembayaranIuranSampah', JSON.stringify(payments));
+                renderTable();
+                form.reset();
+            }
+        });
+
+        function renderTable() {
+            tableBody.innerHTML = '';
+            payments.forEach((p, i) => {
+                const row = `<tr>
+                    <td>${i + 1}</td>
+                    <td>${p.name}</td>
+                    <td>${p.address}</td>
+                    <td style="color:#388e3c;font-weight:bold;">${p.amount.toLocaleString('id-ID', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        function exportCSV() {
+            let csv = "No,Nama,Alamat,Jumlah (Rp)\n";
+            payments.forEach((p, i) => {
+                csv += `${i + 1},"${p.name}","${p.address}",${p.amount}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'pembayaran_iuran_sampah.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        window.exportCSV = exportCSV;
+
+        // Tampilkan data saat halaman dibuka
+        renderTable();
+    </script>
+</body>
+</html>
